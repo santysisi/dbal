@@ -934,6 +934,11 @@ class SQLitePlatform extends AbstractPlatform
             $constraintName = $constraint->getName();
 
             if ($constraintName === '') {
+                Deprecation::trigger(
+                    'doctrine/dbal',
+                    'https://github.com/doctrine/dbal/pull/7143',
+                    'Dropped foreign key must have a constraint name.',
+                );
                 continue;
             }
 

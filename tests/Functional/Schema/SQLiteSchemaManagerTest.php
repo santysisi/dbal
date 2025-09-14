@@ -596,6 +596,115 @@ SQL;
         );
     }
 
+    public function testForeignKeyReferenceChangeIsApplied(): void
+    {
+        $this->dropTableIfExists('c');
+        $this->dropTableIfExists('b');
+        $this->dropTableIfExists('a');
+
+        $tableA = Table::editor()
+            ->setUnquotedName('a')
+            ->setColumns(
+                Column::editor()
+                    ->setUnquotedName('id')
+                    ->setTypeName(Types::INTEGER)
+                    ->create(),
+            )
+            ->setPrimaryKeyConstraint(
+                PrimaryKeyConstraint::editor()
+                    ->setUnquotedColumnNames('id')
+                    ->create(),
+            )
+            ->create();
+
+        $tableB = Table::editor()
+            ->setUnquotedName('b')
+            ->setColumns(
+                Column::editor()
+                    ->setUnquotedName('id')
+                    ->setTypeName(Types::INTEGER)
+                    ->create(),
+            )
+            ->setPrimaryKeyConstraint(
+                PrimaryKeyConstraint::editor()
+                    ->setUnquotedColumnNames('id')
+                    ->create(),
+            )
+            ->create();
+
+        $tableC = Table::editor()
+            ->setUnquotedName('c')
+            ->setColumns(
+                Column::editor()
+                    ->setUnquotedName('id')
+                    ->setTypeName(Types::INTEGER)
+                    ->create(),
+                Column::editor()
+                    ->setUnquotedName('a_id')
+                    ->setTypeName(Types::INTEGER)
+                    ->create(),
+                Column::editor()
+                    ->setUnquotedName('b_id')
+                    ->setTypeName(Types::INTEGER)
+                    ->create(),
+            )
+            ->setPrimaryKeyConstraint(
+                PrimaryKeyConstraint::editor()
+                    ->setUnquotedColumnNames('id')
+                    ->create(),
+            )
+            ->setForeignKeyConstraints(
+                ForeignKeyConstraint::editor()
+                    ->setUnquotedReferencingColumnNames('a_id')
+                    ->setUnquotedReferencedTableName('a')
+                    ->setUnquotedReferencedColumnNames('id')
+                    ->create(),
+            )
+            ->create();
+
+        $this->schemaManager->createTable($tableA);
+        $this->schemaManager->createTable($tableB);
+        $this->schemaManager->createTable($tableC);
+
+        $tableCNew = Table::editor()
+            ->setUnquotedName('c')
+            ->setColumns(
+                Column::editor()
+                    ->setUnquotedName('id')
+                    ->setTypeName(Types::INTEGER)
+                    ->create(),
+                Column::editor()
+                    ->setUnquotedName('a_id')
+                    ->setTypeName(Types::INTEGER)
+                    ->create(),
+                Column::editor()
+                    ->setUnquotedName('b_id')
+                    ->setTypeName(Types::INTEGER)
+                    ->create(),
+            )
+            ->setPrimaryKeyConstraint(
+                PrimaryKeyConstraint::editor()
+                    ->setUnquotedColumnNames('id')
+                    ->create(),
+            )
+            ->setForeignKeyConstraints(
+                ForeignKeyConstraint::editor()
+                    ->setUnquotedReferencingColumnNames('b_id')
+                    ->setUnquotedReferencedTableName('b')
+                    ->setUnquotedReferencedColumnNames('id')
+                    ->create(),
+            )
+            ->create();
+
+        $diff = $this->schemaManager->createComparator()->compareTables(
+            $tableC,
+            $tableCNew,
+        );
+
+        $this->expectDeprecationWithIdentifier('https://github.com/doctrine/dbal/pull/7143');
+        $this->schemaManager->alterTable($diff);
+    }
+
     /**
      * This test duplicates {@see parent::testCommentInTable()} with the only difference that the name of the table
      * being created is quoted. It is only meant to cover the logic of parsing the SQLite CREATE TABLE statement

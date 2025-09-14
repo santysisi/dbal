@@ -8,6 +8,10 @@ awareness about deprecated code.
 
 # Upgrade to 4.4
 
+## Deprecated unnamed `DroppedForeignKey` constraints
+
+Getting a `DroppedForeignKey` without specifying a constraint name has been deprecated.
+
 ## Deprecated `View` features
 
 The `View` constructor has been marked as internal. Use `View::editor()` to instantiate an editor and
